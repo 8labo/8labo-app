@@ -10,14 +10,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #fcfdfe; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #fcfdfe; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .animate-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        input { width: 100%; border-radius: 1.2rem; border: 2px solid #e2e8f0 !important; padding: 1.1rem !important; font-weight: bold !important; background: #ffffff !important; color: #1e293b !important; font-size: 16px !important; position: relative; z-index: 50; }
+        input, select { 
+            width: 100%; border-radius: 1rem; border: 2px solid #e2e8f0 !important; 
+            padding: 1rem !important; font-weight: bold !important; 
+            background: white !important; color: #1e293b !important; font-size: 16px !important; 
+        }
         input:focus { border-color: #005bac !important; outline: none; }
-        .card { background: white; border-radius: 2.2rem; border: 1px solid white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        .btn-primary { background: #005bac; color: white; font-weight: 900; padding: 1.2rem; border-radius: 1.2rem; width: 100%; box-shadow: 0 10px 20px -5px rgba(0,91,172,0.3); }
+        .btn-accent { background: #f39800; color: white; font-weight: 900; padding: 1.2rem; border-radius: 1.2rem; width: 100%; box-shadow: 0 10px 20px -5px rgba(243,152,0,0.3); }
     </style>
 </head>
 <body>
@@ -26,217 +31,169 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- 設定：GAS URL 接続済み ---
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbw2Xpe2xSpWj_1T8qruooNkDKmZ5EO5fJ-fMJz5rHy17K0JE2GXAuXVoJ4JlRZ8kBOyHA/exec"; 
-        const GOOGLE_CALENDAR_EMBED_URL = "https://calendar.google.com/calendar/embed?src=ja.japanese%23holiday%40group.v.calendar.google.com&ctz=Asia%2FTokyo";
+        // --- 本番URL：設定済み ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyjtyoFK3qAVQsCsxAGClfy1WIGA7F6vSZgZdkBsG0N1T9PCW49H3O0PlN5J7wlkmlnRA/exec"; 
 
-        const Icon = ({ name, size = 24, className = "" }) => {
+        const Icon = ({ name }) => {
             const icons = {
-                Home: <g><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></g>,
-                Calendar: <g><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></g>,
-                MessageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>,
-                User: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
-                TrendingUp: <g><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></g>,
-                BookOpen: <g><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>,
                 ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
-                X: <g><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></g>,
-                Star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
-                AlertCircle: <g><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g>
+                // 複数の要素は <g> タグでグループ化してエラーを回避
+                CheckCircle: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
+                Lock: <g><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>,
+                Home: <g><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></g>
             };
             return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     {icons[name] || null}
                 </svg>
             );
         };
 
         const App = () => {
+            const [view, setView] = useState('login'); 
             const [studentInfo, setStudentInfo] = useState(null);
-            const [loginId, setLoginId] = useState("");
-            const [password, setPassword] = useState("");
-            const [view, setView] = useState('home');
-            const [allEvents, setAllEvents] = useState([]);
             const [isSubmitting, setIsSubmitting] = useState(false);
-            const [absenceDate, setAbsenceDate] = useState("");
-            const [formStatus, setFormStatus] = useState("");
-            const [showVisitorReg, setShowVisitorReg] = useState(false);
-            const [regName, setRegName] = useState("");
-            const [regPass, setRegPass] = useState("");
+
+            const [loginId, setLoginId] = useState("");
+            const [loginPass, setLoginPass] = useState("");
+            const [regForm, setRegForm] = useState({ name: "", kana: "", school: "", grade: "小学1年", email: "" });
+            const [regResult, setRegResult] = useState(null);
+            const [newPass, setNewPass] = useState("");
 
             const handleLogin = async (e) => {
                 if (e) e.preventDefault();
                 setIsSubmitting(true);
                 try {
-                    const url = `${GAS_URL}?action=getStudent&id=${encodeURIComponent(loginId.trim())}&pass=${encodeURIComponent(password.trim())}`;
-                    const resp = await fetch(url);
+                    const resp = await fetch(`${GAS_URL}?action=getStudent&id=${loginId.trim()}&pass=${loginPass.trim()}`);
                     const data = await resp.json();
                     if (data.status === "success") {
                         setStudentInfo(data.student);
-                        fetchSchedule();
+                        if (data.student.isFirstLogin) setView('first-pass');
+                        else setView('home');
                     } else { alert(data.message); }
-                } catch (err) { alert("通信エラーが発生しました。"); }
+                } catch (err) { alert("通信エラー：GASのデプロイ設定が「全員(Anyone)」になっているか確認してください。"); }
                 finally { setIsSubmitting(false); }
             };
 
-            const handleVisitorRegister = async (e) => {
+            const handleRegister = async (e) => {
                 e.preventDefault();
                 setIsSubmitting(true);
                 try {
-                    const url = `${GAS_URL}?action=registerVisitor&name=${encodeURIComponent(regName)}&pass=${encodeURIComponent(regPass)}`;
-                    const resp = await fetch(url);
+                    const query = new URLSearchParams({ action: 'registerVisitorDetail', ...regForm }).toString();
+                    const resp = await fetch(`${GAS_URL}?${query}`);
                     const data = await resp.json();
                     if (data.status === "success") {
-                        alert("登録完了！ID: " + data.id);
-                        setLoginId(data.id); setPassword(regPass); setShowVisitorReg(false);
+                        setRegResult(data);
+                        setView('reg-success');
                     }
                 } catch (err) { alert("登録エラー"); }
                 finally { setIsSubmitting(false); }
             };
 
-            const fetchSchedule = async () => {
-                try {
-                    const resp = await fetch(`${GAS_URL}?action=getSchedule`);
-                    const data = await resp.json();
-                    setAllEvents(data.events || []);
-                } catch (err) { console.error("予定取得エラー"); }
-            };
-
-            const handleAbsenceSubmit = async (e) => {
+            const handlePassChange = async (e) => {
                 e.preventDefault();
-                const now = new Date();
-                const sel = new Date(absenceDate);
-                if (now.toDateString() === sel.toDateString() && now.getHours() >= 14) {
-                    alert("当日の14時以降は、お電話でご連絡ください。"); return;
-                }
+                if (newPass.length < 6 || newPass.length > 12) { alert("パスワードは6〜12文字で設定してください"); return; }
                 setIsSubmitting(true);
                 try {
-                    await fetch(`${GAS_URL}?action=absence&studentName=${encodeURIComponent(studentInfo.name)}&absenceDate=${absenceDate}`);
-                    setFormStatus("送信完了しました！");
-                    setTimeout(() => { setFormStatus(""); setView('home'); }, 2000);
-                } catch (err) { alert("送信エラー"); }
+                    const resp = await fetch(`${GAS_URL}?action=changePassword&id=${studentInfo.id}&newPass=${newPass}`);
+                    const data = await resp.json();
+                    if (data.status === "success") {
+                        alert("設定完了！本パスワードでホームへ進みます。");
+                        setView('home');
+                    }
+                } catch (err) { alert("通信エラー"); }
                 finally { setIsSubmitting(false); }
             };
 
-            const isVisitor = studentInfo?.id?.toString().startsWith("VIS");
-            
-            // スケジュールのフィルタリング (自分のクラス分 + 全体分)
-            const myEvents = allEvents.filter(e => {
-                return e.className === "全体" || studentInfo?.classes?.includes(e.className);
-            });
-
-            const SubHeader = ({ title, sub }) => (
-                <div className="relative flex items-center mb-6 px-1 pt-10 animate-in">
-                    <button onClick={() => setView('home')} className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center text-slate-400 active:scale-90 transition-all z-20 border border-slate-50">
-                        <Icon name="ChevronLeft" size={24} />
-                    </button>
-                    <div className="ml-4">
-                        <h2 className="text-2xl font-black text-slate-800 italic uppercase leading-none tracking-tighter">{title}</h2>
-                        <p className="text-[9px] font-black text-[#005bac] tracking-[0.2em] uppercase mt-2 opacity-50">{sub}</p>
-                    </div>
-                </div>
-            );
-
             return (
-                <div className="w-full max-w-[400px] mx-auto min-h-screen bg-[#fcfdfe] flex flex-col relative text-slate-800 shadow-2xl">
-                    {!studentInfo ? (
-                        <div className="flex-1 p-8 bg-[#005bac] flex flex-col items-center justify-center text-white relative">
-                            <div className="w-20 h-20 bg-white rounded-[1.8rem] flex items-center justify-center mb-6 shadow-2xl rotate-3 text-[#005bac] font-black text-4xl italic">8</div>
-                            <h1 className="text-2xl font-black mb-10 italic uppercase tracking-tighter leading-none">8LABO ACADEMY</h1>
-                            <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4 relative z-50">
-                                <input type="text" placeholder="塾生ID" value={loginId} onChange={e=>setLoginId(e.target.value)} />
-                                <input type="password" placeholder="パスワード" value={password} onChange={e=>setPassword(e.target.value)} />
-                                <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] py-4 rounded-xl font-black shadow-xl active:scale-95 italic">
-                                    {isSubmitting ? "認証中..." : "LOGIN"}
-                                </button>
-                                <button type="button" onClick={() => setShowVisitorReg(true)} className="w-full text-[10px] text-white/60 font-black uppercase tracking-widest mt-8 italic">新規登録（初めての方）</button>
+                <div className="w-full max-w-[400px] mx-auto min-h-screen bg-[#fcfdfe] flex flex-col relative overflow-hidden shadow-2xl">
+                    
+                    {view === 'login' && (
+                        <div className="flex-1 p-10 bg-[#005bac] flex flex-col items-center justify-center text-white animate-in">
+                            <div className="w-20 h-20 bg-white rounded-[1.8rem] flex items-center justify-center mb-6 shadow-2xl rotate-3 text-[#005bac] font-black text-4xl italic text-center">8</div>
+                            <h1 className="text-2xl font-black mb-10 italic uppercase tracking-tighter text-center">8LABO ACADEMY</h1>
+                            <form onSubmit={handleLogin} className="w-full space-y-4">
+                                <input type="text" placeholder="ID" value={loginId} onChange={e=>setLoginId(e.target.value)} required />
+                                <input type="password" placeholder="PASSWORD" value={loginPass} onChange={e=>setLoginPass(e.target.value)} required />
+                                <button type="submit" disabled={isSubmitting} className="btn-accent uppercase italic">{isSubmitting ? "AUTH..." : "LOGIN"}</button>
+                                <button type="button" onClick={() => setView('register')} className="w-full text-[11px] font-black text-white/60 uppercase tracking-widest pt-6">新規登録（初めての方）</button>
                             </form>
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col animate-in">
-                            <header className="bg-[#005bac] text-white px-8 pt-10 pb-10 shadow-md text-center shrink-0">
-                                <h1 className="text-xl font-black tracking-tighter italic uppercase">8LABO ACADEMY</h1>
-                            </header>
-                            <main className="flex-1 px-6 pt-6 pb-24 space-y-6 overflow-y-auto hide-scrollbar">
-                                {view === 'home' && (
-                                    <div className="space-y-6">
-                                        <div className="card p-5 flex items-center justify-between">
-                                            <div className="flex items-center gap-4 text-left">
-                                                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-xl shadow-inner text-[#005bac] font-black italic">{isVisitor ? "V" : "S"}</div>
-                                                <div><h2 className="font-black text-slate-800 text-base">{studentInfo.name} 様</h2><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{isVisitor ? "VISITOR" : "MEMBER"}</p></div>
-                                            </div>
-                                            <button onClick={() => setStudentInfo(null)} className="text-slate-200 hover:text-red-400"><Icon name="X" size={18} /></button>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <button onClick={() => setView('schedule')} className="card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg"><Icon name="Calendar" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase">スケジュール</span></button>
-                                            <button onClick={() => setView('contact')} className="card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg"><Icon name="MessageCircle" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase text-center">欠席・連絡</span></button>
-                                            <button onClick={() => isVisitor ? alert("専用機能です") : setView('carte')} className={`card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all ${isVisitor ? 'opacity-40' : ''}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-blue-600'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="TrendingUp" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase text-center">脳育カルテ</span></button>
-                                            <button onClick={() => isVisitor ? alert("専用機能です") : setView('video')} className={`card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all ${isVisitor ? 'opacity-40' : ''}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-slate-700'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="BookOpen" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase text-center">参考資料</span></button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {view === 'schedule' && (
-                                    <div className="space-y-6 animate-in">
-                                        <SubHeader title="Schedule" sub="Class Calendar" />
-                                        <div className="space-y-4">
-                                            <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2 px-1"><Icon name="Star" size={12} fill="currentColor" /> Upcoming for You</h3>
-                                            {myEvents.length > 0 ? myEvents.map((e, i) => (
-                                                <div key={i} className="card p-5 flex items-center justify-between border-l-4 border-l-[#005bac]">
-                                                    <div>
-                                                        <p className="text-[9px] font-black text-slate-300 uppercase">{e.date}</p>
-                                                        <h4 className="font-black text-slate-800 text-sm">{e.title}</h4>
-                                                        <p className="text-[10px] font-bold text-slate-400 mt-1 italic">{e.location}</p>
-                                                    </div>
-                                                    <span className="bg-slate-50 text-[8px] font-black text-slate-400 px-2 py-1 rounded-lg uppercase">{e.className}</span>
-                                                </div>
-                                            )) : <p className="text-center text-xs font-bold text-slate-300 py-10 italic">No schedules found for your class.</p>}
-                                        </div>
-                                        <div className="card overflow-hidden h-[300px] mt-8"><iframe src={GOOGLE_CALENDAR_EMBED_URL} style={{ border: 0, width: '100%', height: '100%' }} frameBorder="0" scrolling="no"></iframe></div>
-                                    </div>
-                                )}
-
-                                {view === 'contact' && (
-                                    <div className="space-y-6 animate-in">
-                                        <SubHeader title="Contact" sub="Absence Report" />
-                                        <div className="card p-7 space-y-6">
-                                            <div className="bg-blue-50 p-4 rounded-2xl flex gap-3 items-start border border-blue-100">
-                                                <Icon name="AlertCircle" className="text-blue-600 shrink-0" size={18} />
-                                                <p className="text-[10px] font-bold text-blue-800 leading-relaxed">当日14時以降の欠席連絡は、お電話にて直接ご連絡をお願いいたします。</p>
-                                            </div>
-                                            <form onSubmit={handleAbsenceSubmit} className="space-y-6">
-                                                <div className="space-y-2">
-                                                    <label className="text-[9px] font-black text-slate-400 uppercase ml-1">欠席する日を選択</label>
-                                                    <input type="date" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} required />
-                                                </div>
-                                                <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all italic tracking-widest">
-                                                    {isSubmitting ? "送信中..." : "欠席連絡を送る"}
-                                                </button>
-                                                {formStatus && <div className="text-center text-green-600 font-black text-sm animate-bounce">{formStatus}</div>}
-                                            </form>
-                                        </div>
-                                    </div>
-                                )}
-                            </main>
-                            <footer className="fixed bottom-8 right-8 z-[100]">
-                                <button onClick={() => setView('home')} className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/60 p-4 text-[#005bac] active:scale-90 transition-transform"><Icon name="Home" size={22} /></button>
-                            </footer>
                         </div>
                     )}
 
-                    {showVisitorReg && (
-                        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
-                            <div className="absolute inset-0 bg-[#005bac]/95 backdrop-blur-xl" onClick={() => setShowVisitorReg(false)}></div>
-                            <div className="bg-white w-full rounded-[2.5rem] p-8 shadow-2xl z-10 relative animate-in">
-                                <button onClick={() => setShowVisitorReg(false)} className="absolute top-6 right-6 text-slate-300"><Icon name="X" size={24} /></button>
-                                <h2 className="text-xl font-black italic uppercase mb-1">New Visitor</h2>
-                                <p className="text-[10px] text-slate-400 font-bold mb-6 tracking-widest uppercase">Registration</p>
-                                <form onSubmit={handleVisitorRegister} className="space-y-4">
-                                    <input type="text" placeholder="お名前" value={regName} onChange={e=>setRegName(e.target.value)} required />
-                                    <input type="password" placeholder="希望パスワード" value={regPass} onChange={e=>setRegPass(e.target.value)} required />
-                                    <button type="submit" className="w-full bg-[#f39800] text-white font-black py-4 rounded-xl shadow-xl active:scale-95 italic">IDを発行して登録する</button>
-                                </form>
+                    {view === 'register' && (
+                        <div className="flex-1 p-8 pt-16 bg-white animate-in overflow-y-auto">
+                            <div className="flex items-center gap-4 mb-8">
+                                <button onClick={() => setView('login')} className="p-2 text-slate-300"><Icon name="ChevronLeft" /></button>
+                                <h2 className="text-2xl font-black text-slate-800 italic uppercase">Visitor Registration</h2>
                             </div>
+                            <form onSubmit={handleRegister} className="space-y-5 pb-10">
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">お名前（漢字フルネーム）</label>
+                                <input type="text" placeholder="八ラボ 太郎" value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} required /></div>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">ふりがな</label>
+                                <input type="text" placeholder="はちらぼ たろう" value={regForm.kana} onChange={e=>setRegForm({...regForm, kana: e.target.value})} required /></div>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">学校名</label>
+                                <input type="text" placeholder="〇〇小学校" value={regForm.school} onChange={e=>setRegForm({...regForm, school: e.target.value})} required /></div>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">学年</label>
+                                <select value={regForm.grade} onChange={e=>setRegForm({...regForm, grade: e.target.value})}>
+                                    <option>未就学</option><option>小学1年</option><option>小学2年</option><option>小学3年</option>
+                                    <option>小学4年</option><option>小学5年</option><option>小学6年</option>
+                                    <option>中学1年</option><option>中学2年</option><option>中学3年</option><option>高校生以上</option>
+                                </select></div>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">メールアドレス</label>
+                                <input type="email" placeholder="contact@8labo.jp" value={regForm.email} onChange={e=>setRegForm({...regForm, email: e.target.value})} required /></div>
+                                <button type="submit" disabled={isSubmitting} className="btn-primary uppercase mt-4 italic">{isSubmitting ? "SENDING..." : "規約に同意して登録"}</button>
+                            </form>
+                        </div>
+                    )}
+
+                    {view === 'reg-success' && (
+                        <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in text-center bg-white">
+                            <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-8 shadow-inner"><Icon name="CheckCircle" /></div>
+                            <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase leading-none">Register Success!</h2>
+                            <p className="text-slate-400 font-bold text-[10px] mb-10 tracking-widest">IDと仮パスワードを発行しました</p>
+                            <div className="w-full bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6 mb-10 shadow-inner">
+                                <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Your ID</p><p className="text-3xl font-black text-[#005bac] tracking-tighter">{regResult.id}</p></div>
+                                <div className="h-px bg-slate-200 w-1/2 mx-auto"></div>
+                                <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Temp Password</p><p className="text-2xl font-black text-slate-800 tracking-tighter">{regResult.tempPass}</p></div>
+                            </div>
+                            <p className="text-[11px] text-slate-400 font-medium mb-8 leading-relaxed italic px-4">※この画面をスクリーンショットで保存してください。<br/>ログイン後に本パスワードへの変更が必要です。</p>
+                            <button onClick={() => { setLoginId(regResult.id); setLoginPass(regResult.tempPass); setView('login'); }} className="btn-primary">ログインへ進む</button>
+                        </div>
+                    )}
+
+                    {view === 'first-pass' && (
+                        <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in bg-white">
+                            <div className="bg-blue-50 text-blue-600 p-5 rounded-3xl mb-8 shadow-sm text-center flex justify-center"><Icon name="Lock" /></div>
+                            <h2 className="text-xl font-black text-slate-800 mb-2 italic uppercase">Security Required</h2>
+                            <p className="text-slate-400 font-bold text-[10px] mb-8 tracking-widest text-center leading-relaxed">
+                                {studentInfo.name} 様、ようこそ。<br/>初回のため、パスワードを本設定に変更してください。
+                            </p>
+                            <form onSubmit={handlePassChange} className="w-full space-y-4">
+                                <input type="password" placeholder="新しいパスワード（6〜12文字）" value={newPass} onChange={e=>setNewPass(e.target.value)} required />
+                                <button type="submit" disabled={isSubmitting} className="btn-primary italic">{isSubmitting ? "更新中..." : "パスワードを確定する"}</button>
+                            </form>
+                        </div>
+                    )}
+
+                    {view === 'home' && (
+                        <div className="flex-1 flex flex-col animate-in bg-[#fcfdfe]">
+                            <header className="bg-[#005bac] text-white p-8 pt-12 pb-10 shadow-md flex justify-between items-center shrink-0">
+                                <h1 className="text-xl font-black tracking-tighter italic uppercase">8LABO ACADEMY</h1>
+                                <button onClick={() => setView('login')} className="p-2 opacity-50"><Icon name="Home" /></button>
+                            </header>
+                            <main className="flex-1 p-6 space-y-6">
+                                <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center gap-5 border border-white">
+                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-slate-50">👤</div>
+                                    <div><h2 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} 様</h2><p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">ID: {studentInfo.id}</p></div>
+                                </div>
+                                <div className="p-10 bg-slate-100 rounded-[3rem] text-center border-2 border-dashed border-slate-200 mt-10">
+                                    <Icon name="CheckCircle" />
+                                    <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase tracking-widest mt-4">
+                                        認証が完了しました。<br/>現在、本番運用に向けて準備中です。
+                                    </p>
+                                </div>
+                            </main>
                         </div>
                     )}
                 </div>
