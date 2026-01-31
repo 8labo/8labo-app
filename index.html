@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>8LABO ACADEMY</title>
-    <!-- ライブラリ読み込み -->
+    <!-- 安定性を重視したライブラリ読み込み -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,14 +17,15 @@
         .animate-in { animation: fadeIn 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 入力フォーム設定 */
+        /* 入力フォームの反応を保証し、色崩れを防ぐ設定 */
         input, select { 
             width: 100%; border-radius: 1rem; border: 2px solid #e2e8f0 !important; 
-            padding: 1rem !important; font-weight: bold !important; 
+            padding: 1.1rem !important; font-weight: bold !important; 
             background: white !important; color: #1e293b !important; font-size: 16px !important; 
             position: relative; z-index: 50;
+            appearance: none; -webkit-appearance: none;
         }
-        input:focus { border-color: #005bac !important; outline: none; }
+        input:focus { border-color: #005bac !important; outline: none; box-shadow: 0 0 0 4px rgba(0,91,172,0.1); }
         .btn-primary { background: #005bac; color: white; font-weight: 900; padding: 1.2rem; border-radius: 1.2rem; width: 100%; shadow: 0 10px 20px -5px rgba(0,91,172,0.3); }
         .btn-accent { background: #f39800; color: white; font-weight: 900; padding: 1.2rem; border-radius: 1.2rem; width: 100%; shadow: 0 10px 20px -5px rgba(243,152,0,0.3); }
         .card { background: white; border-radius: 2.2rem; border: 1px solid white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
@@ -36,7 +37,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- 本番URL：設定済み ---
+        // --- 本番URL：代表指定のURLを設定済み ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzAjc4CW_1hOxcOO7FB8Xv4PznSvHYxoyYs7clffJI8Fk9qscmYsRSp7btnaB7TTT-G6Q/exec"; 
 
         const Icon = ({ name, size = 24, className = "" }) => {
@@ -69,7 +70,6 @@
             // パスワード変更
             const [newPass, setNewPass] = useState("");
 
-            // ログイン処理
             const handleLogin = async (e) => {
                 if (e) e.preventDefault();
                 setIsSubmitting(true);
@@ -80,12 +80,11 @@
                         setStudentInfo(data.student);
                         if (data.student.isFirstLogin) setView('first-pass');
                         else setView('home');
-                    } else { alert(data.message); }
+                    } else { alert("ログイン失敗: " + data.message); }
                 } catch (err) { alert("通信エラー：GASの設定を確認してください。"); }
                 finally { setIsSubmitting(false); }
             };
 
-            // ビジター登録処理
             const handleRegister = async (e) => {
                 e.preventDefault();
                 setIsSubmitting(true);
@@ -97,14 +96,17 @@
                         setRegResult(data);
                         setView('reg-success');
                     }
-                } catch (err) { alert("登録エラー"); }
+                } catch (err) { alert("登録エラーが発生しました。"); }
                 finally { setIsSubmitting(false); }
             };
 
-            // パスワード変更処理
             const handlePassChange = async (e) => {
                 e.preventDefault();
-                if (newPass.length < 6 || newPass.length > 12) { alert("パスワードは6〜12文字で設定してください"); return; }
+                const regex = /^(?=.*[a-z])(?=.*\d)[a-z\d]{6,12}$/;
+                if (!regex.test(newPass)) { 
+                    alert("条件を満たしていません。6〜12文字の英小文字と数字を組み合わせてください。"); 
+                    return; 
+                }
                 setIsSubmitting(true);
                 try {
                     const resp = await fetch(`${GAS_URL}?action=changePassword&id=${studentInfo.id}&newPass=${newPass}`);
@@ -113,7 +115,7 @@
                         alert("設定完了しました！新しいパスワードでホームへ進みます。");
                         setView('home');
                     }
-                } catch (err) { alert("通信エラー"); }
+                } catch (err) { alert("変更中にエラーが発生しました。"); }
                 finally { setIsSubmitting(false); }
             };
 
@@ -127,9 +129,9 @@
                             <h1 className="text-2xl font-black mb-10 italic uppercase tracking-tighter">8LABO ACADEMY</h1>
                             <form onSubmit={handleLogin} className="w-full space-y-4">
                                 <input type="text" placeholder="塾生ID または ビジターID" value={loginId} onChange={e=>setLoginId(e.target.value)} required />
-                                <input type="password" placeholder="パスワード" value={loginPass} onChange={e=>setLoginPass(e.target.value)} required />
+                                <input type="password" placeholder="パスワードを入力" value={loginPass} onChange={e=>setLoginPass(e.target.value)} required />
                                 <button type="submit" disabled={isSubmitting} className="btn-accent uppercase italic">{isSubmitting ? "照合中..." : "ログイン"}</button>
-                                <button type="button" onClick={() => setView('register')} className="w-full text-[11px] font-black text-white/60 uppercase tracking-widest pt-8 italic underline decoration-dotted underline-offset-4">新規登録（初めての方はこちら）</button>
+                                <button type="button" onClick={() => setView('register')} className="w-full text-[11px] font-black text-white/60 uppercase tracking-widest pt-8 italic underline decoration-dotted underline-offset-4 text-center">新規登録（初めての方はこちら）</button>
                             </form>
                         </div>
                     )}
@@ -142,37 +144,37 @@
                                 <h2 className="text-2xl font-black text-slate-800 italic uppercase">Setup Account</h2>
                             </div>
                             <form onSubmit={handleRegister} className="space-y-5 pb-10">
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">お名前（漢字フルネーム）</label>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase">お名前（フルネーム）</label>
                                 <input type="text" placeholder="八ラボ 太郎" value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">ふりがな</label>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase">ふりがな</label>
                                 <input type="text" placeholder="はちらぼ たろう" value={regForm.kana} onChange={e=>setRegForm({...regForm, kana: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">学校名</label>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase">学校名</label>
                                 <input type="text" placeholder="〇〇小学校" value={regForm.school} onChange={e=>setRegForm({...regForm, school: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">学年</label>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase">学年</label>
                                 <select value={regForm.grade} onChange={e=>setRegForm({...regForm, grade: e.target.value})}>
                                     <option>未就学</option><option>小学1年</option><option>小学2年</option><option>小学3年</option>
                                     <option>小学4年</option><option>小学5年</option><option>小学6年</option>
                                     <option>中学1年</option><option>中学2年</option><option>中学3年</option><option>高校生以上</option>
                                 </select></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2">メールアドレス</label>
+                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase">メールアドレス</label>
                                 <input type="email" placeholder="contact@8labo.jp" value={regForm.email} onChange={e=>setRegForm({...regForm, email: e.target.value})} required /></div>
                                 <button type="submit" disabled={isSubmitting} className="btn-primary uppercase mt-4 italic">{isSubmitting ? "送信中..." : "新規登録"}</button>
                             </form>
                         </div>
                     )}
 
-                    {/* 3. 登録完了・ID発行画面 */}
+                    {/* 3. 登録完了 */}
                     {view === 'reg-success' && (
                         <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in text-center bg-white">
                             <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-8 shadow-inner"><Icon name="CheckCircle" size={48} /></div>
-                            <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase">Register Success!</h2>
+                            <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase leading-none">Register Success!</h2>
                             <p className="text-slate-400 font-bold text-[10px] mb-10 tracking-widest">IDと仮パスワードを発行しました</p>
                             <div className="w-full bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6 mb-10 shadow-inner">
                                 <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Your ID</p><p className="text-3xl font-black text-[#005bac] tracking-tighter">{regResult.id}</p></div>
                                 <div className="h-px bg-slate-200 w-1/2 mx-auto"></div>
                                 <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Temp Password</p><p className="text-2xl font-black text-slate-800 tracking-tighter">{regResult.tempPass}</p></div>
                             </div>
-                            <p className="text-[11px] text-slate-400 font-medium mb-8 leading-relaxed italic px-4">※この画面をスクリーンショットで保存してください。<br/>ログイン後に本パスワードへの変更が必要です。</p>
+                            <p className="text-[11px] text-slate-400 font-medium mb-8 leading-relaxed italic px-4 text-center">※この画面をスクリーンショットで保存してください。<br/>ログイン後に本パスワードへの変更が必要です。</p>
                             <button onClick={() => { setLoginId(regResult.id); setLoginPass(regResult.tempPass); setView('login'); }} className="btn-primary">ログインへ進む</button>
                         </div>
                     )}
@@ -181,13 +183,13 @@
                     {view === 'first-pass' && (
                         <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in bg-white">
                             <div className="bg-blue-50 text-blue-600 p-5 rounded-3xl mb-8 shadow-sm flex justify-center"><Icon name="Lock" size={32} /></div>
-                            <h2 className="text-xl font-black text-slate-800 mb-2 italic uppercase">Security Required</h2>
+                            <h2 className="text-xl font-black text-slate-800 mb-2 italic uppercase">Security Update</h2>
                             <p className="text-slate-400 font-bold text-[10px] mb-8 tracking-widest text-center leading-relaxed">
-                                {studentInfo.name} 様、ようこそ。<br/>初回のため、パスワードを本設定に変更してください。
+                                {studentInfo.name} 様、ようこそ。<br/>初回のため、パスワードを設定してください。
                             </p>
                             
                             <div className="bg-blue-50/50 p-5 rounded-2xl mb-8 border border-blue-100 text-left w-full">
-                                <p className="text-[11px] font-black text-blue-800 mb-2">パスワード設定の条件：</p>
+                                <p className="text-[11px] font-black text-blue-800 mb-2">パスワード設定のルール：</p>
                                 <ul className="text-[10px] font-bold text-blue-600 list-disc list-inside space-y-1">
                                     <li>6文字以上、12文字以内で入力してください</li>
                                     <li>アルファベット小文字と数字を混ぜてください</li>
@@ -206,17 +208,17 @@
                     {view === 'home' && (
                         <div className="flex-1 flex flex-col animate-in bg-[#fcfdfe]">
                             <header className="bg-[#005bac] text-white p-8 pt-12 pb-10 shadow-md flex justify-between items-center shrink-0">
-                                <h1 className="text-xl font-black tracking-tighter italic uppercase">8LABO ACADEMY</h1>
-                                <button onClick={() => { setStudentInfo(null); setView('login'); }} className="p-2 opacity-50"><Icon name="Home" size={18} /></button>
+                                <h1 className="text-xl font-black tracking-tighter italic uppercase text-center w-full">8LABO ACADEMY</h1>
+                                <button onClick={() => { setStudentInfo(null); setView('login'); }} className="absolute right-8 p-2 opacity-50"><Icon name="Home" size={18} /></button>
                             </header>
                             <main className="flex-1 p-6 space-y-6 overflow-y-auto hide-scrollbar">
                                 <div className="bg-white p-6 rounded-[2.5rem] shadow-xl flex items-center gap-5 border border-white">
-                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-slate-50">👤</div>
-                                    <div><h2 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} 様</h2><p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest italic">ID: {studentInfo.id}</p></div>
+                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-50 to-slate-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner border border-white">👤</div>
+                                    <div><h2 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} 様</h2><p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest italic">塾生ID: {studentInfo.id}</p></div>
                                 </div>
                                 <div className="p-10 bg-slate-100 rounded-[3rem] text-center border-2 border-dashed border-slate-200 mt-10">
                                     <Icon name="CheckCircle" size={40} className="mx-auto text-slate-300 mb-4" />
-                                    <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase tracking-widest">
+                                    <p className="text-xs font-bold text-slate-400 leading-relaxed uppercase tracking-widest text-center">
                                         認証が完了しました。<br/>現在、本番運用に向けて準備中です。
                                     </p>
                                 </div>
