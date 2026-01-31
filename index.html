@@ -7,11 +7,11 @@ import { Home, TrendingUp, Calendar, MessageCircle, BookOpen, LogOut, Lock, User
 
 // ==========================================
 // 【重要：本番接続設定】
-// 1. デプロイしたURLを下の GAS_URL に貼り付けてください
+// 1. デプロイしたURLを設定済み
 const BYPASS_LOGIN = false; 
-const GAS_URL = "ここにコピーしたURLを貼り付け"; 
+const GAS_URL = "https://script.google.com/macros/s/AKfycbykEwGRci1xg7dSD5CLFoT8ocWQicYoRV2RIqu1muB8V7mmdU7cIFl-wJuVXaRh9B9wLg/exec"; 
 
-// 2. Googleカレンダーの埋め込みURL（あれば）
+// 2. Googleカレンダーの埋め込みURL（塾のカレンダーIDに合わせて調整してください）
 const GOOGLE_CALENDAR_EMBED_URL = "https://calendar.google.com/calendar/embed?src=ja.japanese%23holiday%40group.v.calendar.google.com&ctz=Asia%2FTokyo";
 // ==========================================
 
@@ -42,8 +42,6 @@ const App = () => {
   
   // 欠席連絡用
   const [absenceDate, setAbsenceDate] = useState("");
-  const [makeupOption, setMakeupOption] = useState("later");
-  const [makeupDate, setMakeupDate] = useState("");
   const [formStatus, setFormStatus] = useState({ type: '', msg: '' });
 
   // ビジター登録用
@@ -68,7 +66,7 @@ const App = () => {
         setStudentInfo(data.student);
         fetchSchedule();
       } else { alert(data.message); }
-    } catch (err) { alert("通信エラー：GASのURLが正しいか確認してください"); }
+    } catch (err) { alert("通信エラー：スプレッドシートへの接続を確認してください"); }
     finally { setIsSubmitting(false); }
   };
 
@@ -132,8 +130,8 @@ const App = () => {
         action: "absence",
         studentName: studentInfo.name,
         absenceDate: absenceDate,
-        makeupStatus: makeupOption === 'now' ? '完了' : '未定',
-        makeupDate: makeupOption === 'now' ? makeupDate : '未定'
+        makeupStatus: '未定',
+        makeupDate: '未定'
       };
       await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
       setFormStatus({ type: 'success', msg: '送信完了しました' });
@@ -143,7 +141,7 @@ const App = () => {
     } finally { setIsSubmitting(false); }
   };
 
-  const isVisitor = studentInfo?.id?.startsWith("VIS");
+  const isVisitor = studentInfo?.id?.toString().startsWith("VIS");
   const unreadNotices = notices.filter(n => !readNoticeIds.includes(n.id));
 
   if (!isAuthReady) return <div className="h-screen bg-[#005bac] flex items-center justify-center text-white font-black animate-pulse">8LABO...</div>;
@@ -170,7 +168,7 @@ const App = () => {
           <div className="bg-white w-full rounded-[2.5rem] p-8 shadow-2xl z-10 border border-white animate-in zoom-in duration-200">
             <div className="flex justify-between items-start mb-6">
               <div className="bg-blue-50 text-blue-600 p-3 rounded-2xl"><Bell size={24} /></div>
-              <button onClick={() => setSelectedNotice(null)} className="p-2 text-slate-300"><X size={24} /></button>
+              <button onClick={() => setSelectedNotice(null)} className="p-2 text-slate-300 hover:text-slate-500 transition-colors"><X size={24} /></button>
             </div>
             <div className="space-y-4">
               <div>
@@ -250,16 +248,15 @@ const App = () => {
       ) : (
         <>
           {/* 極スリム・スクエアヘッダー */}
-          <header className="bg-[#005bac] text-white px-8 pt-8 pb-8 relative overflow-hidden shrink-0 shadow-md">
+          <header className="bg-[#005bac] text-white px-8 pt-8 pb-8 relative overflow-hidden shrink-0 shadow-md text-center">
             <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
-            <div className="flex items-center justify-center relative z-10">
-              <h1 className="text-xl font-black tracking-tighter italic uppercase flex items-center gap-2 drop-shadow-sm">8LABO ACADEMY</h1>
-            </div>
+            <h1 className="text-xl font-black tracking-tighter italic uppercase flex items-center justify-center gap-2 drop-shadow-sm">8LABO ACADEMY</h1>
           </header>
 
           <main className="flex-1 px-6 -mt-3 pb-32 relative z-10 space-y-6 overflow-y-auto">
             {view === 'home' && (
               <>
+                {/* 会員カード */}
                 <button onClick={() => setView('settings')} className="w-full bg-white p-3.5 rounded-[2rem] shadow-xl shadow-blue-900/5 flex items-center justify-between border border-white active:scale-98 transition-all">
                   <div className="flex items-center gap-4 text-left">
                     <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-xl shadow-inner border border-slate-100 text-[#005bac] font-black italic">{isVisitor ? "V" : "S"}</div>
@@ -287,6 +284,7 @@ const App = () => {
                   </div>
                 )}
 
+                {/* 2x2 メニュー */}
                 <div className="grid grid-cols-2 gap-4">
                   <button onClick={() => setView('schedule')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg shadow-indigo-100"><Calendar size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">スケジュール</span></button>
                   <button onClick={() => setView('contact')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg shadow-orange-100"><MessageCircle size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">欠席・連絡</span></button>
@@ -338,26 +336,10 @@ const App = () => {
                   </div>
                   <form onSubmit={handleAbsenceSubmit} className="space-y-6">
                     <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">欠席する日</label><input type="date" required className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-bold" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} /></div>
-                    <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">振替日の設定</label>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button type="button" onClick={()=>setMakeupOption('now')} className={`p-4 rounded-xl text-[9px] font-black border ${makeupOption === 'now' ? 'bg-[#005bac] text-white border-[#005bac]' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>今すぐ決める</button>
-                        <button type="button" onClick={()=>setMakeupOption('later')} className={`p-4 rounded-xl text-[9px] font-black border ${makeupOption === 'later' ? 'bg-[#005bac] text-white border-[#005bac]' : 'bg-slate-50 text-slate-400 border-slate-100'}`}>後で決める</button>
-                      </div>
-                    </div>
-                    {makeupOption === 'now' && (
-                      <div className="space-y-2 animate-in slide-in-from-top-2 duration-300"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">振替希望日</label><input type="date" required className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 font-bold" value={makeupDate} onChange={(e) => setMakeupDate(e.target.value)} /></div>
-                    )}
                     <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all">{isSubmitting ? "送信中..." : "内容を確認して連絡"}</button>
                     {formStatus.msg && <div className={`p-4 rounded-2xl text-[10px] font-bold text-center ${formStatus.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{formStatus.msg}</div>}
                   </form>
                 </div>
-              </div>
-            )}
-
-            {view === 'carte' && (
-              <div className="space-y-5">
-                <SubHeader title="Carte" sub="Analysis" />
-                <div className="bg-white p-7 rounded-[2.5rem] shadow-md border border-white text-center py-10 opacity-30"><TrendingUp size={48} className="mx-auto text-slate-200 mb-2" /><p className="text-[9px] font-black uppercase tracking-widest">Growth data preparing...</p></div>
               </div>
             )}
 
@@ -370,10 +352,7 @@ const App = () => {
                       <h3 className="font-black text-xl text-slate-800">{studentInfo.name} {isVisitor ? "様" : "くん"}</h3>
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID: {studentInfo.id}</p>
                   </div>
-                  <div className="space-y-3">
-                    <button onClick={() => alert("通知履歴を順次公開予定")} className="w-full flex items-center justify-between bg-slate-50 p-5 rounded-[1.8rem] border border-slate-100 active:bg-slate-100"><div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-sm text-blue-600"><Inbox size={18} /></div><span className="text-[11px] font-black text-slate-700 uppercase">お知らせ履歴</span></div><ChevronRight size={16} className="text-slate-300" /></button>
-                    <button onClick={() => alert("LINE連携を実行")} className="w-full flex items-center justify-center gap-3 bg-[#06C755] text-white p-5 rounded-[1.8rem] text-[11px] font-black shadow-lg active:scale-95 transition-all"><MessageCircle size={18} fill="currentColor" /> LINE IDを連携する</button>
-                  </div>
+                  <button onClick={() => alert("履歴表示機能を準備中")} className="w-full flex items-center justify-between bg-slate-50 p-5 rounded-[1.8rem] border border-slate-100 active:bg-slate-100"><div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-sm text-blue-600"><Inbox size={18} /></div><span className="text-[11px] font-black text-slate-700 uppercase">お知らせ履歴</span></div><ChevronRight size={16} className="text-slate-300" /></button>
                   <button onClick={() => setStudentInfo(null)} className="text-red-400 font-black text-[10px] uppercase tracking-widest pt-4 text-center">Logout Academy</button>
                 </div>
               </div>
