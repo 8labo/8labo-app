@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>8LABO ACADEMY</title>
-    <!-- ライブラリの読み込み：最も安定したバージョンを指定 -->
+    <!-- ライブラリ：安定性を重視し、順序を固定 -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
@@ -20,21 +20,21 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        input[type="date"] { min-height: 3rem; background: transparent; }
+        input[type="date"] { min-height: 3rem; background: transparent; width: 100%; border-radius: 0.75rem; border: 1px solid #e2e8f0; padding: 0.75rem; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+        const { useState, useEffect } = React;
 
-        // --- 本番接続設定済 ---
+        // --- 設定：GAS URL 埋め込み済み ---
         const GAS_URL = "https://script.google.com/macros/s/AKfycbykEwGRci1xg7dSD5CLFoT8ocWQicYoRV2RIqu1muB8V7mmdU7cIFl-wJuVXaRh9B9wLg/exec"; 
         const GOOGLE_CALENDAR_EMBED_URL = "https://calendar.google.com/calendar/embed?src=ja.japanese%23holiday%40group.v.calendar.google.com&ctz=Asia%2FTokyo";
 
         /**
-         * 100%エラーが出ないインラインSVGアイコンコンポーネント
+         * エラー回避用インラインSVGアイコン
          */
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
@@ -61,7 +61,7 @@
             };
             return (
                 <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                    {icons[name]}
+                    {icons[name] || null}
                 </svg>
             );
         };
@@ -73,7 +73,7 @@
             const [view, setView] = useState('home');
             const [allEvents, setAllEvents] = useState([]);
             
-            // モーダル・状態管理
+            // 状態管理
             const [selectedNotice, setSelectedNotice] = useState(null);
             const [selectedEvent, setSelectedEvent] = useState(null);
             const [showVisitorReg, setShowVisitorReg] = useState(false);
@@ -100,7 +100,7 @@
                         setStudentInfo(data.student);
                         fetchSchedule();
                     } else { alert(data.message); }
-                } catch (err) { alert("ログインに失敗しました。スプレッドシートの設定を確認してください。"); }
+                } catch (err) { alert("ログインに失敗しました。設定を確認してください。"); }
                 finally { setIsSubmitting(false); }
             };
 
@@ -111,10 +111,10 @@
                     const resp = await fetch(`${GAS_URL}?action=registerVisitor&name=${encodeURIComponent(regName)}&pass=${encodeURIComponent(regPass)}`);
                     const data = await resp.json();
                     if (data.status === "success") {
-                        alert(`登録完了！あなたのIDは ${data.id} です。`);
+                        alert("登録完了！ID: " + data.id + " でログインしてください。");
                         setLoginId(data.id); setPassword(regPass); setShowVisitorReg(false);
                     }
-                } catch (err) { alert("登録に失敗しました。"); }
+                } catch (err) { alert("登録エラー"); }
                 finally { setIsSubmitting(false); }
             };
 
@@ -141,7 +141,7 @@
                     await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
                     setSignupSuccess(true);
                     setTimeout(() => { setSelectedEvent(null); setSignupSuccess(false); }, 2500);
-                } catch (err) { alert("申し込みに失敗しました"); }
+                } catch (err) { alert("送信エラー"); }
                 finally { setIsSubmitting(false); }
             };
 
@@ -173,8 +173,9 @@
             const isVisitor = studentInfo?.id?.toString().startsWith("VIS");
             const unreadNotices = notices.filter(n => !readNoticeIds.includes(n.id));
 
+            // グラフ描画用
             const CarteChart = ({ data }) => {
-                if (!window.Recharts) return <div className="p-10 text-center text-slate-300">Loading Chart...</div>;
+                if (!window.Recharts) return <div className="p-10 text-center text-slate-300 font-bold uppercase tracking-widest italic">Loading...</div>;
                 const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = window.Recharts;
                 return (
                     <ResponsiveContainer width="100%" height="100%">
@@ -204,7 +205,7 @@
             return (
                 <div className="w-full max-w-[400px] mx-auto min-h-screen bg-[#fcfdfe] flex flex-col relative overflow-hidden text-slate-800 shadow-2xl">
                     
-                    {/* お知らせ詳細モーダル (Fixed前面固定) */}
+                    {/* お知らせ詳細モーダル */}
                     {selectedNotice && (
                         <div className="fixed inset-0 z-[300] flex items-center justify-center p-6">
                             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setSelectedNotice(null)}></div>
@@ -222,7 +223,7 @@
                         </div>
                     )}
 
-                    {/* イベント申込モーダル (画面下部固定) */}
+                    {/* イベント申込モーダル */}
                     {selectedEvent && (
                         <div className="fixed inset-0 z-[300] flex items-end justify-center">
                             <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isSubmitting && setSelectedEvent(null)}></div>
@@ -233,9 +234,9 @@
                                         <h3 className="text-xl font-black text-slate-800">申込完了しました！</h3>
                                     </div>
                                 ) : (
-                                    <div className="space-y-6">
+                                    <div className="space-y-6 animate-in">
                                         <div className="flex justify-between items-start">
-                                            <div><span className="bg-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest italic uppercase italic">Apply Event</span><h3 className="text-xl font-black text-slate-800 mt-2">{selectedEvent.title}</h3></div>
+                                            <div><span className="bg-orange-100 text-orange-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest uppercase italic tracking-tighter">Apply Event</span><h3 className="text-xl font-black text-slate-800 mt-2">{selectedEvent.title}</h3></div>
                                             <button onClick={() => setSelectedEvent(null)} className="p-2 text-slate-300 hover:text-slate-500"><Icon name="X" size={24} /></button>
                                         </div>
                                         <div className="space-y-4 bg-slate-50 p-5 rounded-[2rem] border border-slate-100 text-xs font-bold text-slate-500 shadow-inner">
@@ -257,12 +258,14 @@
                             <div className="absolute inset-0 bg-[#005bac]/95 backdrop-blur-xl" onClick={() => setShowVisitorReg(false)}></div>
                             <div className="bg-white w-full rounded-[2.5rem] p-8 shadow-2xl z-10 relative border border-white animate-in">
                                 <button onClick={() => setShowVisitorReg(false)} className="absolute top-6 right-6 text-slate-300"><Icon name="X" size={24} /></button>
-                                <h2 className="text-xl font-black text-slate-800 italic uppercase mb-2">New Visitor</h2>
-                                <p className="text-[10px] text-slate-400 font-bold mb-6 tracking-widest uppercase tracking-tighter italic">Member Registration</p>
+                                <h2 className="text-xl font-black text-slate-800 italic uppercase mb-2 leading-none">New Visitor</h2>
+                                <p className="text-[10px] text-slate-400 font-bold mb-6 tracking-widest uppercase italic tracking-tighter">Member Registration</p>
                                 <form onSubmit={handleVisitorRegister} className="space-y-4">
-                                    <input type="text" placeholder="お名前" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none shadow-inner" value={regName} onChange={e=>setRegName(e.target.value)} required />
-                                    <input type="password" placeholder="パスワード" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none shadow-inner" value={regPass} onChange={e=>setRegPass(e.target.value)} required />
-                                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] text-white font-black py-4 rounded-xl shadow-xl active:scale-95">IDを発行して登録する</button>
+                                    <input type="text" placeholder="お名前" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none shadow-inner font-bold" value={regName} onChange={e=>setRegName(e.target.value)} required />
+                                    <input type="password" placeholder="パスワード" className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 outline-none shadow-inner font-bold" value={regPass} onChange={e=>setRegPass(e.target.value)} required />
+                                    <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] text-white font-black py-4 rounded-xl shadow-xl active:scale-95 transition-all">
+                                        {isSubmitting ? "登録中..." : "IDを発行して登録する"}
+                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -270,12 +273,12 @@
 
                     {!studentInfo ? (
                         <div className="flex-1 p-8 bg-[#005bac] flex flex-col items-center justify-center text-white relative">
-                            <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+                            <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
                             <div className="w-20 h-20 bg-white rounded-[1.8rem] flex items-center justify-center mb-6 shadow-2xl rotate-3 text-[#005bac] font-black text-4xl italic">8</div>
                             <h1 className="text-2xl font-black mb-10 italic uppercase text-center tracking-tighter leading-none">8LABO ACADEMY</h1>
                             <form onSubmit={handleLogin} className="w-full max-w-xs space-y-4">
-                                <input type="text" placeholder="ID (塾生またはビジター)" className="w-full p-4 rounded-xl text-slate-800 outline-none shadow-inner" value={loginId} onChange={e=>setLoginId(e.target.value)} />
-                                <input type="password" placeholder="PASSWORD" className="w-full p-4 rounded-xl text-slate-800 outline-none shadow-inner" value={password} onChange={e=>setPassword(e.target.value)} />
+                                <input type="text" placeholder="ID (ST... / VIS...)" className="w-full p-4 rounded-xl text-slate-800 outline-none shadow-inner font-bold" value={loginId} onChange={e=>setLoginId(e.target.value)} />
+                                <input type="password" placeholder="PASSWORD" className="w-full p-4 rounded-xl text-slate-800 outline-none shadow-inner font-bold" value={password} onChange={e=>setPassword(e.target.value)} />
                                 <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] py-4 rounded-xl font-black shadow-xl active:scale-95 transition-all">{isSubmitting ? "認証中..." : "LOGIN"}</button>
                                 <button type="button" onClick={() => setShowVisitorReg(true)} className="w-full text-[10px] text-white/60 font-black uppercase tracking-widest mt-4 flex items-center justify-center gap-2">
                                     <Icon name="UserPlus" size={14} /> 初めての方（登録はこちら）
@@ -284,6 +287,7 @@
                         </div>
                     ) : (
                         <>
+                            {/* 極スリム・スクエアヘッダー */}
                             <header className="bg-[#005bac] text-white px-8 pt-8 pb-8 relative overflow-hidden shrink-0 shadow-md text-center">
                                 <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
                                 <h1 className="text-xl font-black tracking-tighter italic uppercase flex items-center justify-center gap-2 drop-shadow-sm">8LABO ACADEMY</h1>
@@ -292,6 +296,7 @@
                             <main className="flex-1 px-6 -mt-3 pb-32 relative z-10 space-y-6 overflow-y-auto hide-scrollbar">
                                 {view === 'home' && (
                                     <div className="animate-in space-y-6">
+                                        {/* 会員カード */}
                                         <button onClick={() => setView('settings')} className="w-full bg-white p-3.5 rounded-[2rem] shadow-xl shadow-blue-900/5 flex items-center justify-between border border-white active:scale-98 transition-all">
                                             <div className="flex items-center gap-4 text-left">
                                                 <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-xl shadow-inner border border-slate-100 text-[#005bac] font-black italic">{isVisitor ? "V" : "S"}</div>
@@ -320,10 +325,10 @@
                                         )}
 
                                         <div className="grid grid-cols-2 gap-4">
-                                            <button onClick={() => setView('schedule')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg shadow-indigo-100"><Icon name="Calendar" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center">スケジュール</span></button>
-                                            <button onClick={() => setView('contact')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg shadow-orange-100"><Icon name="MessageCircle" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center">欠席・連絡</span></button>
-                                            <button onClick={() => isVisitor ? alert("脳育カルテは塾生専用機能です") : setView('carte')} className={`p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all ${isVisitor ? 'bg-slate-50 opacity-40' : 'bg-white'}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-blue-600 shadow-blue-100'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="TrendingUp" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}脳育カルテ</span></button>
-                                            <button onClick={() => isVisitor ? alert("参考資料は塾生専用機能です") : setView('video')} className={`p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all ${isVisitor ? 'bg-slate-50 opacity-40' : 'bg-white'}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-slate-700 shadow-slate-100'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="BookOpen" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}参考資料</span></button>
+                                            <button onClick={() => setView('schedule')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg shadow-indigo-100"><Icon name="Calendar" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center leading-none">スケジュール</span></button>
+                                            <button onClick={() => setView('contact')} className="bg-white p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all"><div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg shadow-orange-100"><Icon name="MessageCircle" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center leading-none">欠席・連絡</span></button>
+                                            <button onClick={() => isVisitor ? alert("脳育カルテは塾生専用機能です") : setView('carte')} className={`p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all ${isVisitor ? 'bg-slate-50 opacity-40' : 'bg-white'}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-blue-600 shadow-blue-100'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="TrendingUp" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center leading-none">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}脳育カルテ</span></button>
+                                            <button onClick={() => isVisitor ? alert("参考資料は塾生専用機能です") : setView('video')} className={`p-6 rounded-[2.5rem] shadow-sm flex flex-col items-center justify-center gap-3 border border-white active:scale-95 transition-all ${isVisitor ? 'bg-slate-50 opacity-40' : 'bg-white'}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-slate-700 shadow-slate-100'} text-white p-4 rounded-2xl shadow-lg`}><Icon name="BookOpen" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight text-center leading-none">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}参考資料</span></button>
                                         </div>
                                     </div>
                                 )}
@@ -331,7 +336,7 @@
                                 {view === 'schedule' && (
                                     <div className="space-y-6 animate-in">
                                         <SubHeader title="Schedule" sub="Calendar" />
-                                        <div className="space-y-4">
+                                        <div className="space-y-4 px-1">
                                             <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest ml-4 flex items-center gap-2"><Icon name="Star" size={12} fill="currentColor" /> Special Events</h3>
                                             {allEvents.filter(e => e.type === "イベント").length > 0 ? allEvents.filter(e => e.type === "イベント").map((e, i) => (
                                                 <div key={i} className="bg-slate-900 p-6 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden group">
@@ -342,10 +347,10 @@
                                                         <button onClick={() => setSelectedEvent(e)} className="bg-white text-slate-900 px-8 py-3 rounded-2xl text-[11px] font-black shadow-lg hover:bg-slate-50 active:scale-95 transition-all">申し込む</button>
                                                     </div>
                                                 </div>
-                                            )) : <p className="text-[9px] text-slate-300 font-bold ml-4 uppercase tracking-widest">No current special events</p>}
+                                            )) : <p className="text-[9px] text-slate-300 font-bold ml-4 uppercase tracking-widest italic tracking-tighter">No special events now</p>}
                                         </div>
-                                        <div className="bg-white rounded-[2.5rem] shadow-lg overflow-hidden h-[300px] border border-white"><iframe src={GOOGLE_CALENDAR_EMBED_URL} style={{ border: 0, width: '100%', height: '100%' }} frameBorder="0" scrolling="no"></iframe></div>
-                                        <div className="space-y-4 pb-10">
+                                        <div className="bg-white rounded-[2.5rem] shadow-lg overflow-hidden h-[300px] border border-white mx-1"><iframe src={GOOGLE_CALENDAR_EMBED_URL} style={{ border: 0, width: '100%', height: '100%' }} frameBorder="0" scrolling="no"></iframe></div>
+                                        <div className="space-y-4 pb-10 px-1">
                                             <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Normal Lessons</h3>
                                             {allEvents.filter(e => e.type !== "イベント" && (e.className === "全クラス" || (studentInfo.classes && studentInfo.classes.includes(e.className)))).map((e, i) => (
                                                 <div key={i} className="bg-white p-5 rounded-[2rem] shadow-sm flex gap-4 items-center border border-slate-50">
@@ -361,7 +366,7 @@
                                 )}
 
                                 {view === 'contact' && (
-                                    <div className="space-y-6 animate-in">
+                                    <div className="space-y-6 animate-in px-1">
                                         <SubHeader title="Contact" sub="Absence" />
                                         <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-white space-y-6">
                                             <div className="bg-blue-50 p-4 rounded-2xl flex items-center gap-3 border border-blue-100">
@@ -369,7 +374,7 @@
                                                 <p className="text-[10px] text-blue-800 font-bold leading-relaxed">当日の14時以降は、お電話にて直接ご連絡をお願いいたします。</p>
                                             </div>
                                             <form onSubmit={handleAbsenceSubmit} className="space-y-6">
-                                                <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest uppercase">欠席する日</label><input type="date" required className="w-full p-4 rounded-xl bg-slate-50 border border-slate-100 font-bold outline-none shadow-inner" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} /></div>
+                                                <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1 tracking-widest uppercase italic">欠席する日</label><input type="date" required className="font-bold outline-none shadow-inner" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} /></div>
                                                 <button type="submit" disabled={isSubmitting} className="w-full bg-[#f39800] text-white font-black py-5 rounded-[2rem] shadow-xl active:scale-95 transition-all">{isSubmitting ? "送信中..." : "内容を確認して連絡"}</button>
                                                 {formStatus.msg && <div className={`p-4 rounded-2xl text-[10px] font-bold text-center ${formStatus.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{formStatus.msg}</div>}
                                             </form>
@@ -378,23 +383,23 @@
                                 )}
 
                                 {view === 'carte' && (
-                                    <div className="space-y-5 animate-in">
+                                    <div className="space-y-5 animate-in px-1">
                                         <SubHeader title="Carte" sub="Analysis" />
                                         <div className="bg-white p-7 rounded-[2.5rem] shadow-md border border-white space-y-4 h-[300px]">
-                                            <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic"><Icon name="TrendingUp" size={14} className="inline mr-1" /> 50M Sprint (SEC)</h3>
+                                            <h3 className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic tracking-tighter leading-none"><Icon name="TrendingUp" size={14} className="inline mr-1" /> 50M Sprint (SEC)</h3>
                                             <CarteChart data={[{d:'1',s:9.2},{d:'2',s:8.4},{d:'3',s:8.1}]} />
                                         </div>
                                     </div>
                                 )}
 
                                 {view === 'settings' && (
-                                    <div className="space-y-5 animate-in">
+                                    <div className="space-y-5 animate-in px-1">
                                         <SubHeader title="Personal" sub="Account" />
-                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-lg flex flex-col gap-6 border border-white">
+                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-lg flex flex-col gap-6 border border-white relative overflow-hidden">
                                             <div className="flex flex-col items-center text-center pb-2">
                                                     <div className="w-20 h-20 bg-slate-50 rounded-[2.2rem] flex items-center justify-center text-4xl shadow-inner border border-slate-50 mb-4 text-[#005bac]/20"><Icon name="User" size={40} /></div>
-                                                    <h3 className="font-black text-xl text-slate-800">{studentInfo.name} {isVisitor ? "様" : "くん"}</h3>
-                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 italic opacity-60">ID: {studentInfo.id}</p>
+                                                    <h3 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} {isVisitor ? "様" : "くん"}</h3>
+                                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic opacity-60 leading-none">ID: {studentInfo.id}</p>
                                             </div>
                                             <button onClick={() => alert("履歴表示機能を準備中")} className="w-full flex items-center justify-between bg-slate-50 p-5 rounded-[1.8rem] border border-slate-100 active:bg-slate-100 transition-colors"><div className="flex items-center gap-3"><div className="bg-white p-2 rounded-xl shadow-sm text-blue-600"><Icon name="Inbox" size={18} /></div><span className="text-[11px] font-black text-slate-700 uppercase tracking-widest">お知らせ履歴</span></div><Icon name="ChevronRight" size={16} className="text-slate-300" /></button>
                                             <button onClick={() => setStudentInfo(null)} className="text-red-400 font-black text-[10px] uppercase tracking-widest pt-4 text-center hover:opacity-70 transition-opacity">Logout Academy</button>
