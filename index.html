@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>8LABO ACADEMY</title>
-    <!-- 安定性を重視したライブラリ読み込み -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
@@ -13,54 +12,43 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #fcfdfe; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+        body { font-family: 'Inter', sans-serif; background-color: #fcfdfe; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .animate-in { animation: fadeIn 0.3s ease-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .slide-up { animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 入力フォーム設定 */
-        input, select { 
-            width: 100%; border-radius: 1.2rem; border: 2px solid #e2e8f0 !important; 
-            padding: 1.1rem !important; font-weight: bold !important; 
-            background: #ffffff !important; color: #1e293b !important; 
-            font-size: 16px !important; position: relative; z-index: 50;
-            appearance: none; -webkit-appearance: none;
+        /* 入力欄の幅を確実に確保するスタイル */
+        .login-input { 
+            width: 100% !important; 
+            box-sizing: border-box !important;
+            border-radius: 1.5rem; 
+            border: 1px solid #e2e8f0; 
+            padding: 1.25rem 1.5rem; 
+            font-weight: bold; 
+            outline: none; 
+            background: white; 
+            color: #1e293b; 
+            font-size: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            display: block;
         }
-        input:focus { border-color: #005bac !important; outline: none; box-shadow: 0 0 0 4px rgba(0,91,172,0.1); }
+        .login-input:focus { border-color: #005bac; }
         
-        /* 【重要】ログインボタンの強制スタイル：GitHub上でも確実にオレンジ色にする */
-        .btn-login-orange {
-            background-color: #f39800 !important;
-            color: #ffffff !important;
-            font-weight: 900 !important;
-            padding: 1.1rem !important;
-            border-radius: 1.2rem !important;
-            box-shadow: 0 10px 20px -5px rgba(243,152,0,0.5) !important;
-            text-align: center !important;
-            display: block !important;
-            width: 100% !important;
-            border: none !important;
-            cursor: pointer !important;
-            text-transform: uppercase !important;
-            font-style: italic !important;
+        .login-btn {
+            background-color: #f39800;
+            color: white;
+            padding: 1.25rem;
+            border-radius: 1.5rem;
+            font-weight: 900;
+            font-size: 18px;
+            box-shadow: 0 10px 20px -5px rgba(243, 152, 0, 0.4);
+            width: 100%;
+            display: block;
+            transition: all 0.2s;
+            border: none;
         }
-        .btn-login-orange:active { transform: scale(0.97); opacity: 0.9; }
-
-        .btn-primary-blue {
-            background-color: #005bac !important;
-            color: #ffffff !important;
-            font-weight: 900 !important;
-            padding: 1.1rem !important;
-            border-radius: 1.2rem !important;
-            width: 100% !important;
-            border: none !important;
-            box-shadow: 0 10px 20px -5px rgba(0,91,172,0.3) !important;
-        }
-
-        .card { background: white; border-radius: 2.2rem; border: 1px solid white; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+        .login-btn:active { transform: scale(0.96); opacity: 0.9; }
     </style>
 </head>
 <body>
@@ -69,103 +57,54 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // --- 本番接続設定：最新のGAS URLを設定済み ---
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzAjc4CW_1hOxcOO7FB8Xv4PznSvHYxoyYs7clffJI8Fk9qscmYsRSp7btnaB7TTT-G6Q/exec"; 
+        // --- 【最重要：デプロイ後の最新URLをここに貼り付けてください】 ---
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbyUK_1tr4avkqZimUn7PgLvO_gaQ8GLyBqBSYRNUv1oIMFHL7sVfarY3h0QElY5-Q1Fcw/exec"; 
         const GOOGLE_CALENDAR_EMBED_URL = "https://calendar.google.com/calendar/embed?src=ja.japanese%23holiday%40group.v.calendar.google.com&ctz=Asia%2FTokyo";
 
         const Icon = ({ name, size = 24, className = "" }) => {
             const icons = {
-                ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
-                ChevronRight: <polyline points="9 18 15 12 9 6"/>,
-                CheckCircle: <g><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></g>,
-                Lock: <g><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>,
                 Home: <g><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></g>,
                 Calendar: <g><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></g>,
-                MessageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>,
                 TrendingUp: <g><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></g>,
+                MessageCircle: <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>,
                 BookOpen: <g><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>,
-                AlertCircle: <g><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></g>,
-                Star: <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
+                User: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
+                ShieldCheck: <g><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></g>,
+                ChevronLeft: <polyline points="15 18 9 12 15 6"/>,
+                ChevronRight: <polyline points="9 18 15 12 9 6"/>,
                 X: <g><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></g>,
-                Send: <g><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></g>,
-                RefreshCcw: <g><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></g>,
-                User: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>
+                MapPin: <g><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></g>,
+                Lock: <g><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></g>
             };
             return (
-                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                     {icons[name] || null}
                 </svg>
             );
         };
 
         const App = () => {
-            const [view, setView] = useState('login'); 
             const [studentInfo, setStudentInfo] = useState(null);
-            const [isSubmitting, setIsSubmitting] = useState(false);
-            const [allEvents, setAllEvents] = useState([]);
-
             const [loginId, setLoginId] = useState("");
-            const [loginPass, setLoginPass] = useState("");
-            const [regForm, setRegForm] = useState({ name: "", kana: "", school: "", grade: "小学1年", email: "" });
-            const [regResult, setRegResult] = useState(null);
-            const [newPass, setNewPass] = useState("");
-            
-            const [selectedNotice, setSelectedNotice] = useState(null);
-            const [selectedEvent, setSelectedEvent] = useState(null);
-            const [signupSuccess, setSignupSuccess] = useState(false);
+            const [password, setPassword] = useState("");
+            const [view, setView] = useState('home');
+            const [allEvents, setAllEvents] = useState([]);
+            const [isSubmitting, setIsSubmitting] = useState(false);
             const [absenceDate, setAbsenceDate] = useState("");
-            const [makeupOption, setMakeupOption] = useState("later");
-            const [makeupDate, setMakeupDate] = useState("");
-            const [formStatus, setFormStatus] = useState("");
-            const [readNoticeIds, setReadNoticeIds] = useState([]);
-
-            const notices = [
-                { id: 1, date: '2026.01.31', title: '2月の測定会について', body: '来週から光電管を使った測定を行います。ベストタイムを目指して頑張りましょう！' },
-                { id: 2, date: '2026.01.25', title: '機能アップデートのお知らせ', body: 'アプリ内でイベント申し込みや欠席連絡が正式に利用できるようになりました。' }
-            ];
+            const [formStatus, setFormStatus] = useState({ type: '', msg: '' });
 
             const handleLogin = async (e) => {
                 if (e) e.preventDefault();
-                if (!loginId || !loginPass) return;
                 setIsSubmitting(true);
                 try {
-                    const resp = await fetch(`${GAS_URL}?action=getStudent&id=${loginId.trim()}&pass=${loginPass.trim()}`);
+                    const url = `${GAS_URL}?action=getStudent&id=${encodeURIComponent(loginId.trim())}&pass=${encodeURIComponent(password.trim())}`;
+                    const resp = await fetch(url);
                     const data = await resp.json();
-                    if (data.status === "success") {
-                        setStudentInfo(data.student);
-                        fetchSchedule();
-                        if (data.student.isFirstLogin) setView('first-pass');
-                        else setView('home');
-                    } else { alert("ログイン失敗: " + data.message); }
-                } catch (err) { alert("通信エラー：GASのデプロイ設定を確認してください。"); }
-                finally { setIsSubmitting(false); }
-            };
-
-            const handleRegister = async (e) => {
-                e.preventDefault();
-                setIsSubmitting(true);
-                try {
-                    const query = new URLSearchParams({ action: 'registerVisitorDetail', ...regForm }).toString();
-                    const resp = await fetch(`${GAS_URL}?${query}`);
-                    const data = await resp.json();
-                    if (data.status === "success") { setRegResult(data); setView('reg-success'); }
-                } catch (err) { alert("登録エラーが発生しました。"); }
-                finally { setIsSubmitting(false); }
-            };
-
-            const handlePassChange = async (e) => {
-                e.preventDefault();
-                const regex = /^(?=.*[a-z])(?=.*\d)[a-z\d]{6,12}$/;
-                if (!regex.test(newPass)) { 
-                    alert("条件を満たしていません。6〜12文字の英小文字と数字を組み合わせてください。"); 
-                    return; 
-                }
-                setIsSubmitting(true);
-                try {
-                    const resp = await fetch(`${GAS_URL}?action=changePassword&id=${studentInfo.id}&newPass=${newPass}`);
-                    const data = await resp.json();
-                    if (data.status === "success") { setView('home'); }
-                } catch (err) { alert("エラーが発生しました。"); }
+                    if (data.status === "success") { 
+                        setStudentInfo(data.student); 
+                        fetchSchedule(); 
+                    } else { alert(data.message); }
+                } catch (err) { alert("通信エラー：URL設定を確認してください。"); }
                 finally { setIsSubmitting(false); }
             };
 
@@ -174,36 +113,38 @@
                     const resp = await fetch(`${GAS_URL}?action=getSchedule`);
                     const data = await resp.json();
                     setAllEvents(data.events || []);
-                } catch (err) { console.error(err); }
+                } catch (err) { console.error("予定取得エラー"); }
             };
 
             const handleAbsenceSubmit = async (e) => {
                 e.preventDefault();
                 const now = new Date();
-                const sel = new Date(absenceDate);
-                if (now.toDateString() === sel.toDateString() && now.getHours() >= 14) {
-                    alert("当日14時以降の欠席連絡は、お電話にて直接ご連絡をお願いいたします。"); return;
+                if (new Date(absenceDate).toDateString() === now.toDateString() && now.getHours() >= 14) {
+                    alert("当日の14時を過ぎているため、お電話でご連絡ください。"); return;
                 }
                 setIsSubmitting(true);
                 try {
-                    const makeupStr = makeupOption === 'now' ? makeupDate : '未定';
-                    await fetch(`${GAS_URL}?action=absence&studentName=${encodeURIComponent(studentInfo.name)}&absenceDate=${absenceDate}&makeupDate=${encodeURIComponent(makeupStr)}`);
-                    setFormStatus("送信完了しました！");
-                    setTimeout(() => { setFormStatus(""); setView('home'); }, 2000);
-                } catch (err) { alert("送信に失敗しました"); }
+                    const url = `${GAS_URL}?action=absence&studentName=${encodeURIComponent(studentInfo.name)}&absenceDate=${absenceDate}`;
+                    await fetch(url);
+                    setFormStatus({ type: 'success', msg: '送信完了しました' });
+                    setTimeout(() => { setView('home'); setFormStatus({type:'',msg:''}); }, 2000);
+                } catch (err) { setFormStatus({ type: 'error', msg: '送信失敗' }); }
                 finally { setIsSubmitting(false); }
             };
 
-            const isVisitor = studentInfo?.id?.toString().startsWith("VS");
-            const unreadNotices = notices.filter(n => !readNoticeIds.includes(n.id));
-            const myEvents = allEvents.filter(e => e.className === "全体" || studentInfo?.classes?.includes(e.className));
+            const isVisitor = studentInfo?.id?.toString().startsWith("VIS");
+
+            const filteredLessons = allEvents.filter(e => 
+                e.type !== "イベント" && 
+                (e.className === "全クラス" || (studentInfo?.classes && studentInfo.classes.includes(e.className)))
+            );
 
             const SubHeader = ({ title, sub }) => (
-                <div className="relative flex items-center mb-6 px-1 pt-10 animate-in">
-                    <button onClick={() => setView('home')} className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center text-slate-400 active:scale-90 border border-slate-50 transition-all">
+                <div className="relative flex items-center mb-6 px-1 pt-12 animate-in">
+                    <button onClick={() => setView('home')} className="w-10 h-10 bg-white shadow-lg rounded-xl flex items-center justify-center text-slate-400 active:scale-90 transition-all z-20">
                         <Icon name="ChevronLeft" size={24} />
                     </button>
-                    <div className="ml-4 text-left">
+                    <div className="ml-4">
                         <h2 className="text-2xl font-black text-slate-800 italic uppercase leading-none tracking-tighter">{title}</h2>
                         <p className="text-[9px] font-black text-[#005bac] tracking-[0.2em] uppercase mt-2 opacity-50">{sub}</p>
                     </div>
@@ -211,181 +152,127 @@
             );
 
             return (
-                <div className="w-full max-w-[400px] mx-auto min-h-screen bg-[#fcfdfe] flex flex-col relative overflow-hidden shadow-2xl">
+                <div className="w-full max-w-[400px] mx-auto min-h-screen bg-[#fcfdfe] flex flex-col relative overflow-hidden text-slate-800 shadow-2xl">
                     
-                    {/* モーダル表示 (お知らせ) */}
-                    {selectedNotice && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-                            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" onClick={() => setSelectedNotice(null)}></div>
-                            <div className="bg-white w-full rounded-[2.5rem] p-8 shadow-2xl z-10 border border-white animate-in zoom-in duration-200">
-                                <div className="flex justify-between items-start mb-6"><div className="bg-blue-50 text-blue-600 p-3 rounded-2xl"><Icon name="Bell" /></div><button onClick={() => setSelectedNotice(null)} className="p-2 text-slate-300"><Icon name="X" /></button></div>
-                                <h3 className="text-xl font-black text-slate-800 mb-4 text-left leading-tight">{selectedNotice.title}</h3>
-                                <p className="text-sm font-medium text-slate-600 leading-relaxed py-2 text-left">{selectedNotice.body}</p>
-                                <button onClick={() => { setReadNoticeIds([...readNoticeIds, selectedNotice.id]); setSelectedNotice(null); }} className="btn-primary-blue mt-6">確認しました</button>
+                    {!studentInfo ? (
+                        /* --- 指定デザインのログイン画面 --- */
+                        <div className="flex-1 p-8 bg-[#005bac] flex flex-col items-center justify-center text-white relative">
+                            {/* 中央ロゴ：角丸白背景に青文字の8 */}
+                            <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center mb-6 shadow-2xl shadow-black/20">
+                                <span className="text-[#005bac] font-black text-4xl italic">8</span>
                             </div>
-                        </div>
-                    )}
-
-                    {/* 1. ログイン画面 */}
-                    {view === 'login' && (
-                        <div className="flex-1 p-10 bg-[#005bac] flex flex-col items-center justify-center text-white animate-in relative">
-                            <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-                            <div className="w-20 h-20 bg-white rounded-[1.8rem] flex items-center justify-center mb-6 shadow-2xl rotate-3 text-[#005bac] font-black text-4xl italic">8</div>
-                            <h1 className="text-2xl font-black mb-10 italic uppercase tracking-tighter">8LABO ACADEMY</h1>
-                            <form onSubmit={handleLogin} className="w-full space-y-5">
-                                <input type="text" placeholder="個人ID または 塾生ID" value={loginId} onChange={e=>setLoginId(e.target.value)} required />
-                                <input type="password" placeholder="パスワードを入力" value={loginPass} onChange={e=>setLoginPass(e.target.value)} required />
-                                <button type="submit" className="btn-login-orange">
-                                    {isSubmitting ? "照合中..." : "ログイン"}
-                                </button>
-                                <button type="button" onClick={() => setView('register')} className="w-full text-[11px] font-black text-white/60 uppercase tracking-widest pt-8 italic underline underline-offset-4 text-center">新規登録（初めての方はこちら）</button>
-                            </form>
-                        </div>
-                    )}
-
-                    {/* 2. 新規登録フォーム */}
-                    {view === 'register' && (
-                        <div className="flex-1 p-8 pt-16 bg-white animate-in overflow-y-auto hide-scrollbar">
-                            <div className="flex items-center gap-4 mb-8"><button onClick={() => setView('login')} className="p-2 text-slate-300 active:scale-90 transition-all"><Icon name="ChevronLeft" /></button><h2 className="text-2xl font-black text-slate-800 italic uppercase">Setup Account</h2></div>
-                            <form onSubmit={handleRegister} className="space-y-5 pb-10">
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase text-left block">お名前（フルネーム）</label><input type="text" placeholder="八ラボ 太郎" value={regForm.name} onChange={e=>setRegForm({...regForm, name: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase text-left block">ふりがな</label><input type="text" placeholder="はちらぼ たろう" value={regForm.kana} onChange={e=>setRegForm({...regForm, kana: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase text-left block">学校名</label><input type="text" placeholder="〇〇小学校" value={regForm.school} onChange={e=>setRegForm({...regForm, school: e.target.value})} required /></div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase text-left block">学年</label>
-                                    <select value={regForm.grade} onChange={e=>setRegForm({...regForm, grade: e.target.value})}>
-                                        <option>未就学</option><option>小学1年</option><option>小学2年</option><option>小学3年</option><option>小学4年</option><option>小学5年</option><option>小学6年</option><option>中学1年</option><option>中学2年</option><option>中学3年</option><option>高校生以上</option>
-                                    </select>
+                            
+                            <h1 className="text-2xl font-black mb-12 italic uppercase tracking-tighter leading-none">8LABO ACADEMY</h1>
+                            
+                            {/* 入力フォーム：幅100%を維持 */}
+                            <form onSubmit={handleLogin} className="w-full space-y-6">
+                                <div className="w-full">
+                                    <input 
+                                        type="text" 
+                                        className="login-input"
+                                        placeholder="塾生ID または ビジターID" 
+                                        value={loginId} 
+                                        onChange={e=>setLoginId(e.target.value)} 
+                                    />
                                 </div>
-                                <div className="space-y-1"><label className="text-[10px] font-black text-slate-400 ml-2 uppercase text-left block">メールアドレス</label><input type="email" placeholder="contact@8labo.jp" value={regForm.email} onChange={e=>setRegForm({...regForm, email: e.target.value})} required /></div>
-                                <button type="submit" className="btn-primary-blue mt-4 uppercase italic">新規登録</button>
+                                <div className="w-full">
+                                    <input 
+                                        type="password" 
+                                        className="login-input"
+                                        placeholder="パスワードを入力" 
+                                        value={password} 
+                                        onChange={e=>setPassword(e.target.value)} 
+                                    />
+                                </div>
+                                
+                                <div className="w-full pt-2">
+                                    <button type="submit" disabled={isSubmitting} className="login-btn">
+                                        {isSubmitting ? "認証中..." : "ログイン"}
+                                    </button>
+                                </div>
+                                
+                                <div className="text-center pt-4">
+                                    <a href="#" className="text-xs font-bold text-white/70 tracking-widest underline decoration-white/40 underline-offset-8">
+                                        新規登録（初めての方はこちら）
+                                    </a>
+                                </div>
                             </form>
                         </div>
-                    )}
-
-                    {/* 3. 登録完了 */}
-                    {view === 'reg-success' && (
-                        <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in text-center bg-white">
-                            <div className="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-8 shadow-inner"><Icon name="CheckCircle" size={48} /></div>
-                            <h2 className="text-2xl font-black text-slate-800 mb-2 italic uppercase">Register Success!</h2>
-                            <div className="w-full bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6 mb-10">
-                                <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Your ID</p><p className="text-3xl font-black text-[#005bac] tracking-tighter">{regResult.id}</p></div>
-                                <div className="h-px bg-slate-200 w-1/2 mx-auto"></div>
-                                <div><p className="text-[10px] font-black text-slate-300 uppercase mb-1">Temp Password</p><p className="text-2xl font-black text-slate-800 tracking-tighter">{regResult.tempPass}</p></div>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-medium mb-8 leading-relaxed italic px-4">※この画面をスクリーンショットで保存してください。初回ログイン後にパスワード変更が必要です。</p>
-                            <button onClick={() => { setLoginId(regResult.id); setLoginPass(regResult.tempPass); setView('login'); }} className="btn-primary-blue italic">ログイン画面へ</button>
-                        </div>
-                    )}
-
-                    {/* 4. 初回パスワード変更 */}
-                    {view === 'pass-change' || view === 'first-pass' ? (
-                        <div className="flex-1 p-10 flex flex-col items-center justify-center animate-in bg-white">
-                            <div className="bg-blue-50 text-blue-600 p-5 rounded-3xl mb-8 shadow-sm flex justify-center"><Icon name="Lock" size={32} /></div>
-                            <h2 className="text-xl font-black text-slate-800 mb-2 italic uppercase">Security Update</h2>
-                            <p className="text-slate-400 font-bold text-[10px] mb-8 text-center leading-relaxed">初回ログインありがとうございます。ルールに沿ってパスワードを設定してください。</p>
-                            <div className="bg-blue-50/50 p-5 rounded-2xl mb-8 border border-blue-100 text-left w-full"><p className="text-[11px] font-black text-blue-800 mb-2">設定のルール：</p><ul className="text-[10px] font-bold text-blue-600 list-disc list-inside space-y-1"><li>6文字以上、12文字以内で入力してください</li><li>アルファベット小文字と数字を混ぜてください</li><li>記号は使用しないでください</li></ul></div>
-                            <form onSubmit={handlePassChange} className="w-full space-y-4"><input type="password" placeholder="新しいパスワードを入力" value={newPass} onChange={e=>setNewPass(e.target.value)} required /><button type="submit" className="btn-primary-blue italic">パスワードを確定する</button></form>
-                        </div>
-                    ) : null}
-
-                    {/* 5. ホーム画面 */}
-                    {studentInfo && (view === 'home' || view === 'schedule' || view === 'contact' || view === 'settings' || view === 'carte' || view === 'video') && (
-                        <div className="flex-1 flex flex-col animate-in">
-                            <header className="bg-gradient-to-br from-[#005bac] to-[#004a8d] text-white px-8 pt-8 pb-10 relative overflow-hidden shrink-0 shadow-md text-center">
-                                <div className="absolute top-[-20%] right-[-10%] w-48 h-48 bg-white/5 rounded-full blur-3xl"></div>
-                                <h1 className="text-xl font-black tracking-tighter italic uppercase flex items-center justify-center gap-2 drop-shadow-sm">8LABO ACADEMY</h1>
-                            </header>
-
+                    ) : (
+                        /* --- ログイン後のダッシュボード --- */
+                        <>
+                            <header className="bg-[#005bac] text-white px-8 pt-8 pb-8 shrink-0 shadow-md text-center"><h1 className="text-xl font-black tracking-tighter italic uppercase">8LABO ACADEMY</h1></header>
+                            
                             <main className="flex-1 px-6 -mt-3 pb-32 relative z-10 space-y-6 overflow-y-auto hide-scrollbar">
                                 {view === 'home' && (
-                                    <div className="space-y-6 pt-4 animate-in">
-                                        <button onClick={() => setView('settings')} className="w-full bg-white p-3.5 rounded-[2rem] shadow-xl flex items-center justify-between border border-white active:scale-98 transition-all">
+                                    <div className="animate-in space-y-6 pt-4">
+                                        {/* 会員カード */}
+                                        <button onClick={() => setView('settings')} className="w-full bg-white p-4 rounded-[2rem] shadow-xl flex items-center justify-between border border-white">
                                             <div className="flex items-center gap-4 text-left">
-                                                <div className="w-12 h-12 bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl flex items-center justify-center text-3xl shadow-inner border border-slate-50 font-black italic text-[#005bac]">{isVisitor ? "V" : "S"}</div>
-                                                <div><h2 className="font-black text-slate-800 text-base">{studentInfo.name} 様</h2><p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest italic text-left">ID: {studentInfo.id}</p></div>
+                                                <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-xl shadow-inner text-[#005bac] font-black italic">{isVisitor ? "V" : "S"}</div>
+                                                <div><h2 className="font-black text-slate-800 text-base">{studentInfo.name} 様</h2><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">{studentInfo.classes?.join(" / ") || "VISITOR"}</p></div>
                                             </div>
                                             <Icon name="ChevronRight" size={18} className="text-slate-200" />
                                         </button>
-
-                                        {unreadNotices.length > 0 && (
-                                            <div className="space-y-2 px-1 text-left">
-                                                <div className="flex items-center justify-between px-2 mb-0.5"><h3 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">お知らせ</h3><span className="bg-[#005bac] text-white text-[7px] font-black px-1.5 py-0.5 rounded-full shadow-lg">{unreadNotices.length}</span></div>
-                                                {unreadNotices.map(notice => (
-                                                    <button key={notice.id} onClick={() => setSelectedNotice(notice)} className="w-full bg-white p-3.5 pr-5 rounded-[1.5rem] shadow-sm border border-white flex items-center gap-3 active:scale-98 transition-all relative text-left">
-                                                        <div className="w-2 h-2 bg-[#005bac] rounded-full shadow-lg shrink-0"></div>
-                                                        <span className="text-[10px] font-black text-slate-700 truncate flex-1">{notice.title}</span>
-                                                        <span className="text-[7px] font-bold text-slate-300 uppercase shrink-0">{notice.date}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-
+                                        
                                         <div className="grid grid-cols-2 gap-4">
-                                            <button onClick={() => setView('schedule')} className="card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><div className="bg-indigo-500 text-white p-3.5 rounded-2xl shadow-lg shadow-indigo-100"><Icon name="Calendar" size={26} /></div><span className="text-[10px] font-black text-slate-500 uppercase">スケジュール</span></button>
-                                            <button onClick={() => setView('contact')} className="card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><div className="bg-orange-500 text-white p-3.5 rounded-2xl shadow-lg shadow-orange-100"><Icon name="MessageCircle" size={26} /></div><span className="text-[10px] font-black text-slate-500 uppercase">欠席・連絡</span></button>
-                                            <button onClick={() => isVisitor ? alert("脳育カルテは塾生専用機能です") : setView('carte')} className={`card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all ${isVisitor ? 'opacity-40' : ''}`}><div className={`${isVisitor ? 'bg-slate-300' : 'bg-blue-600 shadow-blue-100'} text-white p-3.5 rounded-2xl shadow-lg`}><Icon name="TrendingUp" size={26} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}脳育カルテ</span></button>
-                                            <button onClick={() => setView('video')} className="card p-6 flex flex-col items-center justify-center gap-3 active:scale-95 transition-all"><div className="bg-slate-700 text-white p-3.5 rounded-2xl shadow-lg shadow-slate-100"><Icon name="BookOpen" size={26} /></div><span className="text-[10px] font-black text-slate-500 uppercase tracking-tight">参考資料</span></button>
+                                            <button onClick={() => setView('schedule')} className="bg-white p-6 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 border border-white active:scale-95 shadow-sm transition-all"><div className="bg-indigo-500 text-white p-4 rounded-2xl shadow-lg"><Icon name="Calendar" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase">スケジュール</span></button>
+                                            <button onClick={() => setView('contact')} className="bg-white p-6 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 border border-white active:scale-95 shadow-sm transition-all"><div className="bg-orange-500 text-white p-4 rounded-2xl shadow-lg"><Icon name="MessageCircle" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase">欠席・連絡</span></button>
+                                            <button onClick={() => isVisitor ? alert("脳育カルテは塾生専用です") : setView('carte')} className={`bg-white p-6 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 border border-white active:scale-95 shadow-sm ${isVisitor ? 'opacity-40' : ''}`}><div className="bg-blue-600 text-white p-4 rounded-2xl shadow-lg"><Icon name="TrendingUp" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase text-center">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}脳育カルテ</span></button>
+                                            <button onClick={() => isVisitor ? alert("参考資料は塾生専用です") : setView('video')} className={`bg-white p-6 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 border border-white active:scale-95 shadow-sm ${isVisitor ? 'opacity-40' : ''}`}><div className="bg-slate-700 text-white p-4 rounded-2xl shadow-lg"><Icon name="BookOpen" size={28} /></div><span className="text-[10px] font-black text-slate-500 uppercase text-center">{isVisitor && <Icon name="Lock" size={10} className="inline mr-1" />}参考資料</span></button>
                                         </div>
                                     </div>
                                 )}
 
                                 {view === 'schedule' && (
-                                    <div className="space-y-6 animate-in text-left">
-                                        <SubHeader title="Schedule" sub="Class Calendar" />
-                                        <div className="bg-white rounded-[2.5rem] shadow-lg overflow-hidden h-[300px] border border-white"><iframe src={GOOGLE_CALENDAR_EMBED_URL} style={{ border: 0, width: '100%', height: '100%' }} frameBorder="0" scrolling="no"></iframe></div>
-                                        <div className="space-y-4 px-1 pb-10">
-                                            <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-widest ml-4 flex items-center gap-2"><Icon name="Star" size={12} fill="currentColor" /> Upcoming Events</h3>
-                                            {myEvents.length > 0 ? myEvents.map((e, idx) => (
-                                                <div key={idx} className="bg-white p-5 rounded-[1.8rem] shadow-sm flex gap-4 items-center border border-slate-50">
-                                                    <div className="bg-blue-50 text-[#005bac] p-3 rounded-2xl min-w-[60px] text-center font-black">
-                                                        <div className="text-[9px] opacity-40 uppercase">{new Date(e.date).getMonth()+1}月</div><div className="text-xl">{new Date(e.date).getDate()}</div>
-                                                    </div>
-                                                    <div className="text-left"><div className="text-[8px] font-black text-blue-500 uppercase mb-1">{e.className}</div><h4 className="text-sm font-black text-slate-800 leading-tight">{e.title}</h4></div>
+                                    <div className="space-y-6 animate-in pt-4 pb-10 px-1">
+                                        <SubHeader title="Schedule" sub="Calendar" />
+                                        <div className="bg-white rounded-[2.5rem] shadow-lg overflow-hidden h-[300px] border border-white mx-1"><iframe src={GOOGLE_CALENDAR_EMBED_URL} style={{ border: 0, width: '100%', height: '100%' }} frameBorder="0" scrolling="no"></iframe></div>
+
+                                        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2 italic">Class Lessons</h3>
+                                        {filteredLessons.length > 0 ? filteredLessons.map((e, i) => (
+                                            <div key={i} className="bg-white p-5 rounded-[2rem] shadow-sm flex items-center gap-4 border border-slate-50 mx-1">
+                                                <div className="bg-blue-50 text-[#005bac] p-3 rounded-2xl min-w-[60px] text-center font-black">
+                                                    <div className="text-[8px] opacity-40 uppercase leading-none mb-1">{new Date(e.date).getMonth()+1}月</div>
+                                                    <div className="text-lg leading-none">{new Date(e.date).getDate()}</div>
                                                 </div>
-                                            )) : <p className="text-center py-6 text-[10px] font-bold text-slate-300 italic">No events scheduled.</p>}
-                                        </div>
+                                                <div>
+                                                    <div className="text-[8px] font-black text-blue-500 uppercase tracking-widest mb-1">{e.className}</div>
+                                                    <h4 className="text-sm font-black text-slate-800 leading-tight">{e.title}</h4>
+                                                    <div className="flex items-center gap-1 text-[9px] text-slate-400 mt-1.5 font-bold"><Icon name="MapPin" size={10} /> {e.location}</div>
+                                                </div>
+                                            </div>
+                                        )) : <p className="text-[10px] text-slate-400 font-bold px-4 italic opacity-40">No class lessons scheduled</p>}
                                     </div>
                                 )}
 
                                 {view === 'contact' && (
-                                    <div className="space-y-6 animate-in text-left">
-                                        <SubHeader title="Contact" sub="Absence Report" />
-                                        <div className="card p-7 space-y-6">
-                                            <div className="bg-blue-50 p-4 rounded-2xl flex items-center gap-3 border border-blue-100 shadow-inner">
-                                                <Icon name="AlertCircle" size={20} className="text-blue-600 shrink-0" /><p className="text-[9px] text-blue-800 font-bold leading-relaxed text-left">当日14時以降の連絡は、お電話にて直接ご連絡をお願いいたします。</p>
-                                            </div>
+                                    <div className="space-y-6 animate-in pt-4 px-1">
+                                        <SubHeader title="Contact" sub="Absence" />
+                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-xl border border-white space-y-6">
                                             <form onSubmit={handleAbsenceSubmit} className="space-y-6">
-                                                <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">欠席する日</label><input type="date" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} required /></div>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <button type="button" onClick={()=>setMakeupOption('now')} className={`p-4 rounded-xl text-[10px] font-black border ${makeupOption === 'now' ? 'bg-[#005bac] text-white' : 'bg-slate-50 text-slate-400'}`}>今すぐ決める</button>
-                                                    <button type="button" onClick={()=>setMakeupOption('later')} className={`p-4 rounded-xl text-[10px] font-black border ${makeupOption === 'later' ? 'bg-[#005bac] text-white' : 'bg-slate-50 text-slate-400'}`}>後で決める</button>
-                                                </div>
-                                                {makeupOption === 'now' && <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-1">振替希望日</label><input type="date" value={makeupDate} onChange={e=>setMakeupDate(e.target.value)} required /></div>}
-                                                <button type="submit" disabled={isSubmitting} className="btn-login-orange italic">連絡を送信する</button>
-                                                {formStatus && <div className="text-center text-green-600 font-black text-sm">{formStatus}</div>}
+                                                <div className="space-y-2"><label className="text-[9px] font-black uppercase ml-1 tracking-widest">欠席する日</label><input type="date" className="login-input shadow-none bg-slate-50" value={absenceDate} onChange={e=>setAbsenceDate(e.target.value)} required /></div>
+                                                <button type="submit" disabled={isSubmitting} className="login-btn shadow-none">連絡を送信する</button>
+                                                {formStatus.msg && <div className={`p-4 rounded-2xl text-[10px] font-bold text-center ${formStatus.type === 'success' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>{formStatus.msg}</div>}
                                             </form>
                                         </div>
                                     </div>
                                 )}
-
+                                
                                 {view === 'settings' && (
-                                    <div className="space-y-6 animate-in">
-                                        <SubHeader title="Personal" sub="My Account" />
-                                        <div className="card p-10 flex flex-col items-center gap-8 relative overflow-hidden text-center border-white">
-                                            <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center text-5xl shadow-inner border border-slate-50">👤</div>
-                                            <div><h3 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} 様</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">ID: {studentInfo.id}</p></div>
-                                            <button onClick={() => { setStudentInfo(null); setView('login'); }} className="text-red-400 font-black text-[10px] uppercase tracking-widest pt-10 active:opacity-50 italic">Logout Academy</button>
+                                    <div className="space-y-5 animate-in pt-4 px-1">
+                                        <SubHeader title="Personal" sub="Account" />
+                                        <div className="bg-white p-8 rounded-[2.5rem] shadow-lg flex flex-col items-center border border-white relative overflow-hidden text-center shadow-blue-900/5">
+                                            <div className="w-20 h-20 bg-slate-50 rounded-[2.2rem] flex items-center justify-center text-4xl shadow-inner border border-slate-50 mb-4 text-[#005bac]/20">👤</div>
+                                            <h3 className="font-black text-xl text-slate-800 leading-none">{studentInfo.name} 様</h3>
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic opacity-60">ID: {studentInfo.id}</p>
+                                            <button onClick={() => setStudentInfo(null)} className="text-red-400 font-black text-[10px] uppercase tracking-widest pt-10 text-center hover:opacity-70 transition-opacity italic border-none bg-transparent">Logout Academy</button>
                                         </div>
                                     </div>
                                 )}
                             </main>
-
-                            <footer className="fixed bottom-8 right-8 z-[150] pointer-events-none">
-                                <nav className="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.15)] border border-white/60 p-4 pointer-events-auto active:scale-90 transition-transform">
-                                    <button onClick={() => setView('home')} className={`transition-all ${view === 'home' ? 'text-[#005bac]' : 'text-slate-300 hover:text-[#005bac]'}`}><Icon name="Home" size={24} /></button>
-                                </nav>
-                            </footer>
-                        </div>
+                            <footer className="fixed bottom-8 right-8 z-[200] pointer-events-none"><nav className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/60 p-4 pointer-events-auto active:scale-90 transition-transform"><button onClick={() => setView('home')} className={`transition-colors border-none bg-transparent ${view === 'home' ? 'text-[#005bac]' : 'text-slate-300'}`}><Icon name="Home" size={22} /></button></nav></footer>
+                        </>
                     )}
                 </div>
             );
